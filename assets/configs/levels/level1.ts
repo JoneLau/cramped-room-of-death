@@ -449,7 +449,7 @@ const enemies: Array<IEntity> = [
 const door: IEntity = {
   x: 7,
   y: 8,
-  direction: MOVE_DIRECTION.BOTTOM,
+  direction: MOVE_DIRECTION.TOP,
   state: ENTITY_BEHAVIOR.IDLE,
   type: ENTITY_TYPE.DOOR,
 };

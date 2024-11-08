@@ -10,7 +10,6 @@ export class NodeUtil {
         uiTrans.setAnchorPoint(0, 1)
         return node;
     }
-
 }
 
 

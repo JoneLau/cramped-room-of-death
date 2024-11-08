@@ -1,8 +1,8 @@
-/***
+/**
  * 全局枚举
  */
 
-/***
+/**
  * 地图瓦片枚举
  */
 export enum TILE_TYPE {
@@ -18,7 +18,18 @@ export enum TILE_TYPE {
     FLOOR = 'FLOOR',                        //地面
 }
 
-/***
+/**
+ * 瓦片占用类型
+ */
+export enum TILE_BLOCK_TYPE {
+    FLOOR = "FLOOR",                //行走格
+    ROAD_BLOCK = "ROAD_BLOCK",      //不可通行格
+    BURST = "BURST",                //地陷
+    ENEMY = "ENEMY",                //敌人
+    DOOR = "DOOR"                   //门
+}
+
+/**
  * 角色方向枚举
  */
 export enum MOVE_DIRECTION {
@@ -28,37 +39,37 @@ export enum MOVE_DIRECTION {
     BOTTOM = 'bottom',
 }
 
-/***
+/**
 * 按钮状态枚举
 */
 export enum CONTROLLER_STATE {
-    LEFT = 'LEFT',
-    RIGHT = 'RIGHT',
-    TOP = 'TOP',
-    BOTTOM = 'BOTTOM',
-    TURN_LEFT = 'TURN_LEFT',
-    TURN_RIGHT = 'TURN_LEFT',
+    LEFT = 'left',
+    RIGHT = 'right',
+    TOP = 'top',
+    BOTTOM = 'bottom',
+    TURN_LEFT = 'turn_left',
+    TURN_RIGHT = 'turn_right',
 }
 
-/***
+/**
  * 角色动作枚举
  */
 export enum ENTITY_BEHAVIOR {
-    IDLE = 'IDLE',
-    ATTACK = 'ATTACK',
-    TURN_LEFT = 'TURN_LEFT',
-    TURN_RIGHT = 'TURN_RIGHT',
-    BLOCK_FRONT = 'BLOCK_FRONT',
-    BLOCK_BACK = 'BLOCK_BACK',
-    BLOCK_LEFT = 'BLOCK_LEFT',
-    BLOCK_RIGHT = 'BLOCK_RIGHT',
-    BLOCK_TURN_LEFT = 'BLOCK_TURN_LEFT',
-    BLOCK_TURN_RIGHT = 'BLOCK_TURN_RIGHT',
-    DEATH = 'DEATH',
-    AIR_DEATH = 'AIR_DEATH',
+    IDLE = 'idle',
+    ATTACK = 'attack',
+    TURN_LEFT = 'turnleft',
+    TURN_RIGHT = 'turnright',
+    BLOCK_FRONT = 'blockfront',
+    BLOCK_BACK = 'blockback',
+    BLOCK_LEFT = 'blockleft',
+    BLOCK_RIGHT = 'blockright',
+    BLOCK_TURN_LEFT = 'blockturnleft',
+    BLOCK_TURN_RIGHT = 'blockturnright',
+    DEATH = 'death',
+    AIR_DEATH = 'airdeath',
 }
 
-/***
+/**
  * 场景角色枚举
  */
 export enum ENTITY_TYPE {
@@ -72,4 +83,15 @@ export enum ENTITY_TYPE {
     BURST = 'BURST',
     DOOR = 'DOOR',                      //门
     SMOKE = 'SMOKE',
+}
+
+/**
+ * 游戏事件
+ */
+export enum GAME_EVENT {
+    PLAYER_CTRL = 'player_ctrl',
+    ATTACK_ENEMY = 'attack_enemy',
+    ATTACK_PLAYER = 'attack_player',
+    OPEN_DOOR = 'open_door',
+    PLAYER_MOVE_END = 'player_move_end',
 }
