@@ -22,6 +22,7 @@ export class Enemy extends Entity {
         let { x, y } = DataManager.instance.player;
         //在可攻击范围内
         if (Math.abs(this.x - x) + Math.abs(this.y - y) <= 1) {
+            this.state = ENTITY_BEHAVIOR.ATTACK;
             globalEvent.emit(GAME_EVENT.ATTACK_PLAYER);
         }
     }
@@ -34,5 +35,6 @@ export class Enemy extends Entity {
         const dataInst = DataManager.instance;
         dataInst.enemies.splice(idx, 1);
         dataInst.tileBlockState[this.x * dataInst.row + this.y] = TILE_BLOCK_TYPE.FLOOR;
+        globalEvent.off(GAME_EVENT.PLAYER_MOVE_END, this.playerMoveEnd, this);
     }
 }

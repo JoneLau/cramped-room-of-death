@@ -33,6 +33,7 @@ export enum TILE_BLOCK_TYPE {
  * 角色方向枚举
  */
 export enum MOVE_DIRECTION {
+    NONE = "none",
     LEFT = 'left',
     RIGHT = 'right',
     TOP = 'top',
@@ -94,4 +95,7 @@ export enum GAME_EVENT {
     ATTACK_PLAYER = 'attack_player',
     OPEN_DOOR = 'open_door',
     PLAYER_MOVE_END = 'player_move_end',
+    SCREEN_SHAKE = 'screen_shake',               //震屏事件
+    NEXT_LEVEL = 'next_level',                   //进入下一关
+    RECORD_STEP = 'record_step',                 //步骤记录
 }

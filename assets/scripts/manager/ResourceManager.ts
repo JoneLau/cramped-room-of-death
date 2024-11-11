@@ -38,10 +38,9 @@ export class ResourceManager extends Singleton {
     /** 加载动画资源 */
     loadPlayerAnim(name: string, targetName: string, direction: MOVE_DIRECTION) {
         let dir = direction;
-        let path = `texture/${targetName}/${name}/${dir}`;
+        let path = `texture/${targetName}/${name}${direction !== MOVE_DIRECTION.NONE ? "/" + dir : ""}`;
         return this.loadDir(path);
     }
-
 }
 
 

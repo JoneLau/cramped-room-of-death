@@ -10,8 +10,8 @@ const { ccclass, property } = _decorator;
 export class Player extends Entity {
     private readonly speed = 1 / 10;
     private isMoving = false;
-    private targetX = 0;
-    private targetY = 0;
+    targetX = 0;
+    targetY = 0;
 
     onLoad(): void {
         super.onLoad();
@@ -68,13 +68,14 @@ export class Player extends Entity {
         const attackTarget = this.getAttackTarget(ctrl);
         if (attackTarget) {
             this.state = ENTITY_BEHAVIOR.ATTACK;
+            globalEvent.emit(GAME_EVENT.ATTACK_ENEMY, attackTarget);
             return;
         }
 
-        const canPass = this.isPassableTile(ctrl);
+        const blockDir = this.getBlockDir(ctrl);
         //非可行走格
-        if (!canPass) {
-            console.log("非可行走格，地图要震动");
+        if (blockDir !== MOVE_DIRECTION.NONE) {
+            globalEvent.emit(GAME_EVENT.SCREEN_SHAKE, blockDir);
             return;
         }
 
@@ -85,13 +86,13 @@ export class Player extends Entity {
     getAttackTarget(dir: CONTROLLER_STATE) {
         const enemies = DataManager.instance.enemies;
         for (const enemy of enemies) {
-            if (dir === CONTROLLER_STATE.TOP && this.direction === MOVE_DIRECTION.TOP && this.x === enemy.x && enemy.y - 2 === this.y) {
+            if (dir === CONTROLLER_STATE.TOP && this.direction === MOVE_DIRECTION.TOP && this.x === enemy.x && enemy.y === this.y - 2) {
                 return enemy;
-            } else if (dir === CONTROLLER_STATE.BOTTOM && this.direction === MOVE_DIRECTION.BOTTOM && this.x === enemy.x && enemy.y + 2 === this.y) {
+            } else if (dir === CONTROLLER_STATE.BOTTOM && this.direction === MOVE_DIRECTION.BOTTOM && this.x === enemy.x && enemy.y === this.y + 2) {
                 return enemy;
-            } else if (dir === CONTROLLER_STATE.LEFT && this.direction === MOVE_DIRECTION.LEFT && enemy.x + 2 === this.x && enemy.y === this.y) {
+            } else if (dir === CONTROLLER_STATE.LEFT && this.direction === MOVE_DIRECTION.LEFT && enemy.x === this.x - 2 && enemy.y === this.y) {
                 return enemy;
-            } else if (dir === CONTROLLER_STATE.RIGHT && this.direction === MOVE_DIRECTION.RIGHT && enemy.x - 2 === this.x && enemy.y === this.y) {
+            } else if (dir === CONTROLLER_STATE.RIGHT && this.direction === MOVE_DIRECTION.RIGHT && enemy.x === this.x + 2 && enemy.y === this.y) {
                 return enemy;
             }
         }
@@ -99,12 +100,13 @@ export class Player extends Entity {
         return null;
     }
 
-    /** 是否可通行格 */
-    isPassableTile(dir: CONTROLLER_STATE) {
+    /** 获得障碍方向 */
+    getBlockDir(dir: CONTROLLER_STATE) {
         let weaponX = this.x;
         let weaponY = this.y;
         let nextX = this.x;
         let nextY = this.y;
+        let blockDir = MOVE_DIRECTION.NONE;
 
         if (this.direction === MOVE_DIRECTION.TOP) {
             weaponY -= 1;
@@ -119,15 +121,19 @@ export class Player extends Entity {
         if (dir === CONTROLLER_STATE.TOP) {
             nextY -= 1;
             weaponY -= 1;
+            blockDir = MOVE_DIRECTION.TOP;
         } else if (dir === CONTROLLER_STATE.BOTTOM) {
             nextY += 1;
             weaponY += 1;
+            blockDir = MOVE_DIRECTION.BOTTOM;
         } else if (dir === CONTROLLER_STATE.LEFT) {
             nextX -= 1;
             weaponX -= 1;
+            blockDir = MOVE_DIRECTION.LEFT;
         } else if (dir === CONTROLLER_STATE.RIGHT) {
             nextX += 1;
             weaponX += 1;
+            blockDir = MOVE_DIRECTION.RIGHT;
         } else if (dir === CONTROLLER_STATE.TURN_LEFT) {
             if (this.direction === MOVE_DIRECTION.TOP) {
                 //left
@@ -135,24 +141,28 @@ export class Player extends Entity {
                 nextY -= 1;
                 weaponY += 1;
                 weaponX -= 1;
+                blockDir = MOVE_DIRECTION.LEFT;
             } else if (this.direction === MOVE_DIRECTION.BOTTOM) {
                 //right
                 nextX += 1;
                 nextY += 1;
                 weaponY -= 1;
                 weaponX += 1;
+                blockDir = MOVE_DIRECTION.RIGHT;
             } else if (this.direction === MOVE_DIRECTION.LEFT) {
                 //bottom
                 nextX -= 1;
                 nextY += 1;
                 weaponY += 1;
                 weaponX += 1;
+                blockDir = MOVE_DIRECTION.BOTTOM;
             } else if (this.direction === MOVE_DIRECTION.RIGHT) {
                 //top
                 nextX += 1;
                 nextY -= 1;
                 weaponY -= 1;
                 weaponX -= 1;
+                blockDir = MOVE_DIRECTION.TOP;
             }
         } else if (dir === CONTROLLER_STATE.TURN_RIGHT) {
             if (this.direction === MOVE_DIRECTION.TOP) {
@@ -161,38 +171,49 @@ export class Player extends Entity {
                 nextY -= 1;
                 weaponY += 1;
                 weaponX += 1;
+                blockDir = MOVE_DIRECTION.RIGHT;
             } else if (this.direction === MOVE_DIRECTION.BOTTOM) {
                 //left
                 nextX -= 1;
                 nextY += 1;
                 weaponY -= 1;
                 weaponX -= 1;
+                blockDir = MOVE_DIRECTION.LEFT;
             } else if (this.direction === MOVE_DIRECTION.LEFT) {
                 //top
                 nextX -= 1;
                 nextY -= 1;
                 weaponY -= 1;
                 weaponX += 1;
+                blockDir = MOVE_DIRECTION.TOP;
             } else if (this.direction === MOVE_DIRECTION.RIGHT) {
                 //bottom
                 nextX += 1;
                 nextY += 1;
                 weaponY += 1;
                 weaponX -= 1;
+                blockDir = MOVE_DIRECTION.BOTTOM;
             }
         }
 
         const row = DataManager.instance.row;
         const col = DataManager.instance.col;
-        if (nextX < 0 || nextY < 0 || nextX >= col || nextY >= row) return false;
-
         const nextTileInfo = DataManager.instance.tileBlockState[DataManager.instance.row * nextX + nextY];
+        if (nextTileInfo === TILE_BLOCK_TYPE.DOOR && DataManager.instance.door.state === ENTITY_BEHAVIOR.DEATH) {
+            globalEvent.emit(GAME_EVENT.NEXT_LEVEL);
+            return MOVE_DIRECTION.NONE;
+        }
+
+        if (nextX < 0 || nextY < 0 || nextX >= col || nextY >= row) return blockDir;
+
+
         const nextWeaponTileInfo = DataManager.instance.tileBlockState[DataManager.instance.row * weaponX + weaponY];
-        if (nextTileInfo !== TILE_BLOCK_TYPE.FLOOR || nextWeaponTileInfo !== TILE_BLOCK_TYPE.FLOOR) return false;
-        return true;
+        if (nextTileInfo !== TILE_BLOCK_TYPE.FLOOR || (nextWeaponTileInfo !== TILE_BLOCK_TYPE.FLOOR && nextWeaponTileInfo !== TILE_BLOCK_TYPE.DOOR)) return blockDir;
+        return MOVE_DIRECTION.NONE;
     }
 
     move(dir: CONTROLLER_STATE) {
+        globalEvent.emit(GAME_EVENT.RECORD_STEP);
         if (dir === CONTROLLER_STATE.TOP) {
             this.targetY -= 1;
             this.isMoving = true;

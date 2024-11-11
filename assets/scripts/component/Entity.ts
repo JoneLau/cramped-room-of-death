@@ -1,7 +1,7 @@
 import { _decorator, Animation, animation, AnimationClip, Component, Sprite, SpriteFrame, UITransform } from 'cc';
 import { IEntity } from '../../configs/levels';
 import { behavior_state_cfg, TILE_HEIGHT, TILE_WIDTH } from '../base/DataConfig';
-import { ENTITY_BEHAVIOR, MOVE_DIRECTION } from '../enum/GameEnum';
+import { ENTITY_BEHAVIOR, ENTITY_TYPE, MOVE_DIRECTION } from '../enum/GameEnum';
 import { ResourceManager } from '../manager/ResourceManager';
 import { sortSpriteFrame } from '../utils/Util';
 const { ccclass, property } = _decorator;
@@ -12,6 +12,7 @@ const ANIMATION_SPEED = 8;
 export class Entity extends Component {
     x = 0;
     y = 0;
+    type: ENTITY_TYPE;
     protected entityName = "woodenskeleton";
 
     get state() {

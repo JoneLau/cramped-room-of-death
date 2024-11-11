@@ -4,10 +4,11 @@ import { globalEvent, TILE_HEIGHT, TILE_WIDTH } from '../base/DataConfig';
 import { Door } from '../component/Door';
 import { Enemy } from '../component/Enemy';
 import { Player } from '../component/Player';
+import { Shake } from '../component/Shake';
 import { TileMapShakeController } from '../component/TileMapShakeController';
 import { TileMapView } from '../component/TileMapView';
-import { GAME_EVENT, TILE_BLOCK_TYPE, TILE_TYPE } from '../enum/GameEnum';
-import { DataManager } from '../manager/DataManager';
+import { ENTITY_BEHAVIOR, ENTITY_TYPE, GAME_EVENT, MOVE_DIRECTION, TILE_BLOCK_TYPE, TILE_TYPE } from '../enum/GameEnum';
+import { DataManager, IRecord } from '../manager/DataManager';
 import { ResourceManager } from '../manager/ResourceManager';
 import { NodeUtil } from '../utils/NodeUtil';
 const { ccclass, property } = _decorator;
@@ -35,8 +36,15 @@ export class BattleManager extends Component {
     private _stage: Node;
 
     start() {
+        globalEvent.on(GAME_EVENT.NEXT_LEVEL, this.nextLevel, this);
+        globalEvent.on(GAME_EVENT.RECORD_STEP, this.recordStep, this);
         this.createStage();
         this.buildLevel();
+    }
+
+    onDestroy() {
+        globalEvent.off(GAME_EVENT.NEXT_LEVEL, this.nextLevel, this);
+        globalEvent.off(GAME_EVENT.RECORD_STEP, this.recordStep, this);
     }
 
     /** 控制器处理 */
@@ -45,7 +53,6 @@ export class BattleManager extends Component {
     }
 
     nextLevel() {
-        this.reset();
         DataManager.instance.level++;
         this.buildLevel();
     }
@@ -55,6 +62,7 @@ export class BattleManager extends Component {
         const dataInst = DataManager.instance;
         dataInst.enemies.length = 0;
         dataInst.player = null;
+        dataInst.records.length = 0;
     }
 
 
@@ -65,13 +73,14 @@ export class BattleManager extends Component {
         this._stage.parent = this.node;
         this._stage.setSiblingIndex(2);
         this._stage.addComponent(TileMapShakeController);
+        this._stage.addComponent(Shake);
     }
 
     /** 关卡构建 */
     async buildLevel() {
         const currLevel = levels[`level${DataManager.instance.level}`];
         if (!currLevel) return console.warn("当前关卡数量不够拉~~~~");
-
+        this.reset();
         // this.level = currLevel;
 
         const mapInfo = currLevel.mapInfo;
@@ -80,9 +89,9 @@ export class BattleManager extends Component {
         DataManager.instance.col = mapInfo[0].length;
         Promise.all([
             this.createTileMap(currLevel.mapInfo),
-            this.createPlayer(currLevel.player),
             this.createEnemies(currLevel.enemies),
-            this.createDoor(currLevel.door)
+            this.createDoor(currLevel.door),
+            this.createPlayer(currLevel.player),
         ])
     }
 
@@ -101,6 +110,7 @@ export class BattleManager extends Component {
             for (let j = 0; j < col; j++) {
                 const colData = colDatas[j];
                 const { src, type } = colData;
+
                 if (!src || !type) continue;
 
                 //number为1、5、9的tile有多种图片，随机挑一张图来渲染
@@ -138,7 +148,7 @@ export class BattleManager extends Component {
         const offsetX = (TILE_WIDTH * row) / 2;
         const offsetY = (TILE_HEIGHT * col) / 2 + 80;
         this._stage.setPosition(-offsetX, offsetY);
-        //shake stop
+        this._stage.getComponent(Shake)?.stop();
     }
 
     /** 创建主角 */
@@ -170,6 +180,64 @@ export class BattleManager extends Component {
         const doorComp = door.addComponent(Door);
         doorComp.init(data);
         DataManager.instance.tileBlockState[DataManager.instance.row * data.x + data.y] = TILE_BLOCK_TYPE.DOOR;
+        DataManager.instance.door = doorComp;
+    }
+    //#endRegion
+
+    //#region
+    undo() {
+        const dst = DataManager.instance;
+        const data = dst.records.pop();
+        if (!data) return console.log("无法回退");
+
+        dst.player.x = dst.player.targetX = data.player.x;
+        dst.player.y = dst.player.targetY = data.player.y;
+        dst.player.updateDirAndState(data.player.direction, data.player.state);
+
+        data.enemies.forEach((enemy, idx) => {
+            dst.enemies[idx].x = enemy.x;
+            dst.enemies[idx].y = enemy.y;
+            dst.player.updateDirAndState(enemy.direction, enemy.state);
+        });
+
+        dst.door.x = data.door.x;
+        dst.door.y = data.door.y;
+        dst.door.updateDirAndState(data.door.direction, data.door.state);
+    }
+
+    restart() {
+        this.buildLevel();
+    }
+
+    out() {
+
+    }
+
+    recordStep() {
+        const dst = DataManager.instance;
+        const item: IRecord = {} as IRecord;
+        item.player = {
+            x: dst.player.targetX,
+            y: dst.player.targetY,
+            state: (dst.player.state === ENTITY_BEHAVIOR.IDLE || dst.player.state === ENTITY_BEHAVIOR.DEATH || dst.player.state === ENTITY_BEHAVIOR.AIR_DEATH) ? dst.player.state : ENTITY_BEHAVIOR.IDLE,
+            direction: dst.player.direction,
+            type: ENTITY_TYPE.PLAYER
+        };
+
+        item.enemies = [];
+        dst.enemies.forEach(({ x, y, direction, state, type }) => {
+            item.enemies.push({ x, y, state, direction, type })
+        });
+
+        let door = DataManager.instance.door;
+        item.door = {
+            x: door.x,
+            y: door.y,
+            direction: door.state === ENTITY_BEHAVIOR.DEATH ? MOVE_DIRECTION.NONE : door.direction,
+            state: door.state,
+            type: door.type
+        };
+        dst.records.push(item);
     }
     //#endRegion
 }
