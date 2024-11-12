@@ -1,4 +1,4 @@
-import { _decorator, Component, Event, math, Node } from 'cc';
+import { _decorator, Component, director, Event, math, Node, tween, UIOpacity } from 'cc';
 import { IEntity, ITile, levels } from '../../configs/levels';
 import { globalEvent, TILE_HEIGHT, TILE_WIDTH } from '../base/DataConfig';
 import { Door } from '../component/Door';
@@ -74,12 +74,26 @@ export class BattleManager extends Component {
         this._stage.setSiblingIndex(2);
         this._stage.addComponent(TileMapShakeController);
         this._stage.addComponent(Shake);
+        this._stage.addComponent(UIOpacity);
+    }
+
+    fadeIn() {
+        if (!this._stage) return;
+        const uiOpacity = this._stage.getComponent(UIOpacity);
+        tween(uiOpacity).to(1, { opacity: 0 }).start();
+    }
+
+    fadeOut() {
+        if (!this._stage) return;
+        const uiOpacity = this._stage.getComponent(UIOpacity);
+        tween(uiOpacity).to(1, { opacity: 255 }).start();
     }
 
     /** 关卡构建 */
     async buildLevel() {
         const currLevel = levels[`level${DataManager.instance.level}`];
         if (!currLevel) return console.warn("当前关卡数量不够拉~~~~");
+        this.fadeIn();
         this.reset();
         // this.level = currLevel;
 
@@ -92,7 +106,9 @@ export class BattleManager extends Component {
             this.createEnemies(currLevel.enemies),
             this.createDoor(currLevel.door),
             this.createPlayer(currLevel.player),
-        ])
+        ]).then(() => {
+            this.fadeOut();
+        })
     }
 
     /** 创建地图 */
@@ -210,7 +226,7 @@ export class BattleManager extends Component {
     }
 
     out() {
-
+        director.loadScene("start");
     }
 
     recordStep() {
