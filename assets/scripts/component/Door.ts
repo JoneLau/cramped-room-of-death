@@ -25,7 +25,9 @@ export class Door extends Entity {
     /** 检查关卡敌人状态 */
     enemyCheck() {
         const dataInst = DataManager.instance;
-        if (dataInst.enemies.length > 0) return;
+        for (const enemy of dataInst.enemies) {
+            if (enemy.state !== ENTITY_BEHAVIOR.DEATH) return;
+        }
 
         this.updateDirAndState(MOVE_DIRECTION.NONE, ENTITY_BEHAVIOR.DEATH);
         // dataInst.tileBlockState[this.x * dataInst.row + this.y] = TILE_BLOCK_TYPE.FLOOR;

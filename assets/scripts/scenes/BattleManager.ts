@@ -197,7 +197,7 @@ export class BattleManager extends Component {
         data.enemies.forEach((enemy, idx) => {
             dst.enemies[idx].x = enemy.x;
             dst.enemies[idx].y = enemy.y;
-            dst.player.updateDirAndState(enemy.direction, enemy.state);
+            dst.enemies[idx].updateDirAndState(enemy.direction, enemy.state);
         });
 
         dst.door.x = data.door.x;

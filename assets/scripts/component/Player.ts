@@ -68,6 +68,7 @@ export class Player extends Entity {
         const attackTarget = this.getAttackTarget(ctrl);
         if (attackTarget) {
             this.state = ENTITY_BEHAVIOR.ATTACK;
+            globalEvent.emit(GAME_EVENT.RECORD_STEP);
             globalEvent.emit(GAME_EVENT.ATTACK_ENEMY, attackTarget);
             return;
         }
@@ -86,6 +87,7 @@ export class Player extends Entity {
     getAttackTarget(dir: CONTROLLER_STATE) {
         const enemies = DataManager.instance.enemies;
         for (const enemy of enemies) {
+            if (enemy.state === ENTITY_BEHAVIOR.DEATH) continue;
             if (dir === CONTROLLER_STATE.TOP && this.direction === MOVE_DIRECTION.TOP && this.x === enemy.x && enemy.y === this.y - 2) {
                 return enemy;
             } else if (dir === CONTROLLER_STATE.BOTTOM && this.direction === MOVE_DIRECTION.BOTTOM && this.x === enemy.x && enemy.y === this.y + 2) {

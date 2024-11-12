@@ -62,6 +62,7 @@ export class Entity extends Component {
     async changeAnimState() {
         this._animState.stop();
         this._animState.removeClip(this._animClip, true);
+        console.log(`load res ${this.entityName}/${this._state}/${this.direction}`);
         const res = await ResourceManager.instance.loadPlayerAnim(this._state, this.entityName, this.direction);
         if (!res || !res.length) return console.error("Resource loss", this.entityName + " " + this._state + "  " + this._direction);
         sortSpriteFrame(res);
@@ -79,7 +80,6 @@ export class Entity extends Component {
         }
 
         !defaultTrack && animClip.addTrack(track);
-        console.log(behavior_state_cfg[this._state])
         animClip.wrapMode = behavior_state_cfg[this._state];
         animClip.duration = keyFrameCount / ANIMATION_SPEED;
         this._animState.defaultClip = this._animClip;
